@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>PDF to Text</title>
+  <!-- <script src="https://mozilla.github.io/pdf.js/build/pdf.js"></script> -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+    }
+    button {
+      color: white;
+      background-color: #333;
+      border: none;
+      padding: 10px 20px;
+      margin: 10px 0;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #555;
+    }
+    input[type="file"] {
+      color: white;
+    }
+  </style>
+
+</head>
+<body>
+
+  <input type="file" id="uploadPDF" accept=".pdf"/>
+  <button onclick="loadPDF()">Cargar PDF</button>
+  <div id="output"></div>
+
+  <script>
+    let pdfData = null;
+
+    // Escucha cambios en el input de tipo file
+    document.getElementById('uploadPDF').addEventListener('change', function() {
+      const file = this.files[0];
+      if (file && file.type === 'application/pdf') {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          pdfData = new Uint8Array(reader.result);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    async function loadPDF() {
+      if (!pdfData) {
+        alert('Primero selecciona un archivo PDF');
+        return;
+      }
+
+      // Borra el contenido anterior
+      document.getElementById('output').innerHTML = '';
+
+      const pdf = await pdfjsLib.getDocument({data: pdfData}).promise;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+
+        // Junta el texto de los items en un solo string
+        const strings = textContent.items.map(item => item.str);
+        const text = strings.join(' ');
+
+        // Crea y añade un nuevo párrafo
+        const p = document.createElement('p');
+        p.textContent = text;
+        document.getElementById('output').appendChild(p);
+      }
+    }
+  </script>
+
+</body>
+</html>
